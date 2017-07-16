@@ -1,0 +1,45 @@
+version: "2"
+
+services:
+
+  database:
+    container_name: database
+    image: mariadb
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+
+  pma:
+    image: phpmyadmin/phpmyadmin
+    container_name: pma
+    environment:
+      - PMA_HOST=database
+    ports:
+      - 1701:80
+
+  drupalconosle:
+    image: drupal:8
+    container_name: drupalconosle
+    hostname: drupalconosle
+    volumes:
+      - "./000-default.conf:/etc/apache2/sites-available/000-default.conf"
+      - "./drupal.dev:/var/www/html"
+      - "./drupal-console:/drupal/console"
+      - "./drupal-console-zh-hans:/drupal/console-zh-hans"
+      - "./drupal-console-en:/drupal/console-en"
+      - "./drupal.phar:/usr/local/bin/drupal"
+    ports:
+      - 1702:80
+
+  drushconsole:
+    image: drush/drush
+    container_name: drushconsole
+    volumes_from:
+      - drupalconosle
+    volumes:
+      - "$HOME/.composer:/composer"
+    entrypoint:
+      - bash
+    tty: true
+    working_dir: /var/www/html
+    depends_on:
+      - drupalconosle
